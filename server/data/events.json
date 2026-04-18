@@ -1,0 +1,110 @@
+[
+  {
+    "id": "event_001",
+    "buyer_id": "buyer_001",
+    "listing_id": "listing_001",
+    "event_type": "listing_viewed",
+    "timestamp": "2026-04-18T11:00:00Z",
+    "duration_seconds": 95,
+    "source_channel": "email",
+    "metadata": {
+      "note": "Viewed family listing carefully"
+    }
+  },
+  {
+    "id": "event_002",
+    "buyer_id": "buyer_001",
+    "listing_id": "listing_001",
+    "event_type": "listing_saved",
+    "timestamp": "2026-04-18T11:08:00Z",
+    "duration_seconds": 40,
+    "source_channel": "email",
+    "metadata": {
+      "note": "Saved school-focused listing"
+    }
+  },
+  {
+    "id": "event_003",
+    "buyer_id": "buyer_001",
+    "listing_id": "listing_002",
+    "event_type": "listing_skipped",
+    "timestamp": "2026-04-18T11:15:00Z",
+    "duration_seconds": 12,
+    "source_channel": "sms",
+    "metadata": {
+      "note": "Skipped commute-focused home"
+    }
+  },
+  {
+    "id": "event_004",
+    "buyer_id": "buyer_002",
+    "listing_id": "listing_002",
+    "event_type": "listing_viewed",
+    "timestamp": "2026-04-18T11:10:00Z",
+    "duration_seconds": 70,
+    "source_channel": "sms",
+    "metadata": {
+      "note": "Viewed commute-friendly starter home"
+    }
+  },
+  {
+    "id": "event_005",
+    "buyer_id": "buyer_002",
+    "listing_id": "listing_002",
+    "event_type": "message_clicked",
+    "timestamp": "2026-04-18T11:17:00Z",
+    "duration_seconds": 15,
+    "source_channel": "sms",
+    "metadata": {
+      "note": "Clicked listing from text message"
+    }
+  },
+  {
+    "id": "event_006",
+    "buyer_id": "buyer_002",
+    "listing_id": "listing_002",
+    "event_type": "listing_saved",
+    "timestamp": "2026-04-18T11:20:00Z",
+    "duration_seconds": 35,
+    "source_channel": "sms",
+    "metadata": {
+      "note": "Saved modern starter home"
+    }
+  },
+  {
+    "id": "event_007",
+    "buyer_id": "buyer_003",
+    "listing_id": "listing_003",
+    "event_type": "listing_viewed",
+    "timestamp": "2026-04-18T11:05:00Z",
+    "duration_seconds": 110,
+    "source_channel": "email",
+    "metadata": {
+      "note": "Spent long time on school district details"
+    }
+  },
+  {
+    "id": "event_008",
+    "buyer_id": "buyer_003",
+    "listing_id": "listing_003",
+    "event_type": "listing_saved",
+    "timestamp": "2026-04-18T11:12:00Z",
+    "duration_seconds": 30,
+    "source_channel": "email",
+    "metadata": {
+      "note": "Saved high school score home"
+    }
+  },
+  {
+    "id": "event_009",
+    "buyer_id": "buyer_003",
+    "listing_id": "listing_003",
+    "event_type": "message_replied",
+    "timestamp": "2026-04-18T11:20:00Z",
+    "duration_seconds": 20,
+    "source_channel": "email",
+    "metadata": {
+      "note": "Asked about touring this weekend"
+    }
+  }
+]
