@@ -1,16 +1,20 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 from services.inference_service import infer_decision_twin
 from services.recommendation_service import generate_recommendations
 from services.outreach_service import generate_outreach
 from services.buyer_service import get_all_buyers, get_buyer_by_id
 from services.event_service import get_events_by_buyer_id
 from services.listing_service import get_all_listings
+from services.auth_service import get_current_user_from_header, require_role
 
 router = APIRouter()
 
 
 @router.get("/inbox")
-def get_buyer_inbox():
+def get_buyer_inbox(authorization: str = Header(default=None)):
+    current_user = get_current_user_from_header(authorization)
+    require_role(current_user, ["agent"])
+
     buyers = get_all_buyers()
     listings = get_all_listings()
 
@@ -57,12 +61,17 @@ def get_buyer_inbox():
 
 
 @router.get("/")
-def get_buyers():
+def get_buyers(authorization: str = Header(default=None)):
+    current_user = get_current_user_from_header(authorization)
+    require_role(current_user, ["agent"])
     return get_all_buyers()
 
 
 @router.get("/{buyer_id}")
-def get_buyer_by_id_route(buyer_id: str):
+def get_buyer_by_id_route(buyer_id: str, authorization: str = Header(default=None)):
+    current_user = get_current_user_from_header(authorization)
+    require_role(current_user, ["agent"])
+
     buyer = get_buyer_by_id(buyer_id)
     if not buyer:
         raise HTTPException(status_code=404, detail="Buyer not found")
@@ -70,7 +79,10 @@ def get_buyer_by_id_route(buyer_id: str):
 
 
 @router.get("/{buyer_id}/events")
-def get_buyer_events(buyer_id: str):
+def get_buyer_events(buyer_id: str, authorization: str = Header(default=None)):
+    current_user = get_current_user_from_header(authorization)
+    require_role(current_user, ["agent"])
+
     buyer = get_buyer_by_id(buyer_id)
     if not buyer:
         raise HTTPException(status_code=404, detail="Buyer not found")
@@ -78,7 +90,10 @@ def get_buyer_events(buyer_id: str):
 
 
 @router.get("/{buyer_id}/dashboard")
-def get_buyer_dashboard(buyer_id: str):
+def get_buyer_dashboard(buyer_id: str, authorization: str = Header(default=None)):
+    current_user = get_current_user_from_header(authorization)
+    require_role(current_user, ["agent"])
+
     buyer = get_buyer_by_id(buyer_id)
 
     if not buyer:

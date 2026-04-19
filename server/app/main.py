@@ -3,6 +3,7 @@ from routes.buyers import router as buyers_router
 from routes.twins import router as twins_router
 from routes.recommendations import router as recommendations_router
 from routes.outreach import router as outreach_router
+from routes.auth import router as auth_router
 
 app = FastAPI(
     title="BuyerTwin AI Backend",
@@ -10,6 +11,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(buyers_router, prefix="/buyers", tags=["buyers"])
 app.include_router(twins_router, prefix="/twins", tags=["twins"])
 app.include_router(recommendations_router, prefix="/recommendations", tags=["recommendations"])
