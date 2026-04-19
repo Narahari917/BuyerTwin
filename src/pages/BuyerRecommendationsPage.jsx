@@ -1,9 +1,11 @@
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Sparkles, Heart, CalendarDays } from 'lucide-react'
-import { buyers, getRankedListingsForBuyer } from '../data/mockData'
 import PageWrapper from '../components/PageWrapper'
 import { useTheme } from '../components/ThemeContext'
+import { useAuth } from '../context/AuthContext'
+import { getBuyerRecommendations } from '../api/api'
 import { trackEvent } from '../api/events'
 import BrandHeader from '../components/BrandHeader'
 import AnimatedSection from '../components/AnimatedSection'
@@ -12,11 +14,48 @@ import AppFooter from '../components/AppFooter'
 export default function BuyerRecommendationsPage() {
   const { id } = useParams()
   const { isDark } = useTheme()
-  const buyer = buyers.find((b) => b.id === id)
+  const { user, bootstrapping } = useAuth()
 
-  if (!buyer) return <div className="p-10 text-xl">Buyer not found.</div>
+  const [recommendations, setRecommendations] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const recommendations = getRankedListingsForBuyer(buyer).slice(0, 3)
+  const buyer = user && String(user.id) === String(id) ? user : null
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (!buyer) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        setError('')
+        const data = await getBuyerRecommendations(buyer.id)
+        setRecommendations(data.recommendations || [])
+      } catch (err) {
+        setError(err.message || 'Failed to load recommendations')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (!bootstrapping) {
+      fetchRecommendations()
+    }
+  }, [buyer, bootstrapping])
+
+  if (bootstrapping || loading) {
+    return <div className="p-10 text-xl">Loading recommendations...</div>
+  }
+
+  if (!buyer) {
+    return <div className="p-10 text-xl">Buyer not found.</div>
+  }
+
+  if (error) {
+    return <div className="p-10 text-xl text-red-500">{error}</div>
+  }
 
   const handleInterested = async (listing) => {
     await trackEvent({
@@ -28,7 +67,7 @@ export default function BuyerRecommendationsPage() {
       metadata: {
         title: listing.address_label,
         city: listing.city,
-        fitScore: listing.fitScore,
+        fitScore: listing.fit_score ?? listing.fitScore,
       },
     })
     alert(`Marked interested in ${listing.address_label}`)
@@ -44,7 +83,7 @@ export default function BuyerRecommendationsPage() {
       metadata: {
         title: listing.address_label,
         city: listing.city,
-        fitScore: listing.fitScore,
+        fitScore: listing.fit_score ?? listing.fitScore,
       },
     })
     alert(`Tour request started for ${listing.address_label}`)
@@ -65,7 +104,7 @@ export default function BuyerRecommendationsPage() {
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
-            {buyer.must_have_features.map((feature) => (
+            {(buyer.must_have_features || []).map((feature) => (
               <span
                 key={feature}
                 className={`rounded-full px-3 py-1 text-xs font-medium ${isDark ? 'badge-dark' : 'badge-light'}`}
@@ -95,7 +134,7 @@ export default function BuyerRecommendationsPage() {
               </div>
 
               <div className={`rounded-full px-4 py-2 text-sm font-semibold ${isDark ? 'primary-btn-dark' : 'primary-btn-light'}`}>
-                Match {listing.fitScore}
+                Match {listing.fit_score ?? listing.fitScore}
               </div>
             </div>
 
@@ -115,7 +154,7 @@ export default function BuyerRecommendationsPage() {
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
-              {listing.tags.map((tag) => (
+              {(listing.tags || []).map((tag) => (
                 <span
                   key={tag}
                   className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${isDark ? 'badge-dark' : 'badge-light'}`}
@@ -126,7 +165,7 @@ export default function BuyerRecommendationsPage() {
             </div>
 
             <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-              <p className="text-xl font-semibold">${listing.price.toLocaleString()}</p>
+              <p className="text-xl font-semibold">${Number(listing.price).toLocaleString()}</p>
 
               <div className="flex gap-3">
                 <button

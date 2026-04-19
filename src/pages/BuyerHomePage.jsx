@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Search,
@@ -8,10 +8,12 @@ import {
   Heart,
   CalendarDays,
   Sparkles,
+  Bookmark,
+  X,
 } from 'lucide-react'
 import PageWrapper from '../components/PageWrapper'
 import { useTheme } from '../components/ThemeContext'
-import { buyers } from '../data/mockData'
+import { useAuth } from '../context/AuthContext'
 import { arizonaHomes, arizonaCities, formatPrice } from '../data/arizonaHomes'
 import { trackEvent } from '../api/events'
 import BrandHeader from '../components/BrandHeader'
@@ -21,14 +23,44 @@ import AppFooter from '../components/AppFooter'
 export default function BuyerHomePage() {
   const { id } = useParams()
   const { isDark } = useTheme()
-  const buyer = buyers.find((b) => b.id === id)
+  const { user, bootstrapping } = useAuth()
 
   const [search, setSearch] = useState('')
   const [city, setCity] = useState('All')
   const [maxPrice, setMaxPrice] = useState('Any')
+  const [savedHomes, setSavedHomes] = useState([])
+  const [showSavedPanel, setShowSavedPanel] = useState(false)
+
+  if (bootstrapping) {
+    return <div className="p-10 text-xl">Loading...</div>
+  }
+
+  const buyer = user && String(user.id) === String(id) ? user : null
 
   if (!buyer) {
     return <div className="p-10 text-xl">Buyer not found.</div>
+  }
+
+  const savedHomesStorageKey = `buyertwin-saved-homes-${buyer.id}`
+
+  useEffect(() => {
+    const raw = localStorage.getItem(savedHomesStorageKey)
+    if (!raw) {
+      setSavedHomes([])
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(raw)
+      setSavedHomes(Array.isArray(parsed) ? parsed : [])
+    } catch {
+      setSavedHomes([])
+    }
+  }, [savedHomesStorageKey])
+
+  const persistSavedHomes = (homes) => {
+    setSavedHomes(homes)
+    localStorage.setItem(savedHomesStorageKey, JSON.stringify(homes))
   }
 
   const filteredHomes = useMemo(() => {
@@ -45,6 +77,8 @@ export default function BuyerHomePage() {
       return matchesSearch && matchesCity && matchesPrice
     })
   }, [search, city, maxPrice])
+
+  const isSaved = (homeId) => savedHomes.some((home) => home.id === homeId)
 
   const handleSearchChange = async (value) => {
     setSearch(value)
@@ -83,6 +117,14 @@ export default function BuyerHomePage() {
   }
 
   const handleInterested = async (home) => {
+    if (isSaved(home.id)) {
+      alert(`${home.title} is already in your saved properties.`)
+      return
+    }
+
+    const updatedHomes = [home, ...savedHomes]
+    persistSavedHomes(updatedHomes)
+
     await trackEvent({
       userId: String(buyer.id),
       role: 'buyer',
@@ -93,9 +135,30 @@ export default function BuyerHomePage() {
         title: home.title,
         city: home.city,
         price: home.price,
+        neighborhood: home.neighborhood,
       },
     })
+
     alert(`Saved ${home.title}`)
+  }
+
+  const handleRemoveSavedHome = async (home) => {
+    const updatedHomes = savedHomes.filter((savedHome) => savedHome.id !== home.id)
+    persistSavedHomes(updatedHomes)
+
+    await trackEvent({
+      userId: String(buyer.id),
+      role: 'buyer',
+      eventType: 'listing_unsaved',
+      page: 'buyer_home',
+      targetId: home.id,
+      metadata: {
+        title: home.title,
+        city: home.city,
+        price: home.price,
+        neighborhood: home.neighborhood,
+      },
+    })
   }
 
   const handleTour = async (home) => {
@@ -135,6 +198,105 @@ export default function BuyerHomePage() {
         title={`Welcome, ${buyer.name}`}
         subtitle="Start with exploration. As you search, filter, save, and request tours, the system can learn what matters to you and improve future recommendations."
       />
+
+      <div className="mt-4 flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => setShowSavedPanel((prev) => !prev)}
+          className={`relative flex h-14 w-14 items-center justify-center rounded-full shadow-sm transition ${
+            isDark ? 'surface-dark border border-white/10' : 'surface-light border border-slate-200'
+          }`}
+          aria-label="Open saved properties"
+          title="Saved properties"
+        >
+          <Bookmark size={22} />
+          {savedHomes.length > 0 ? (
+            <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-slate-900 px-1 text-xs font-semibold text-white">
+              {savedHomes.length}
+            </span>
+          ) : null}
+        </button>
+      </div>
+
+      {showSavedPanel ? (
+        <AnimatedSection delay={0.04}>
+          <div className={`mt-4 rounded-[32px] p-6 md:p-8 ${isDark ? 'surface-dark' : 'surface-light'}`}>
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold">Saved Properties</h2>
+                <p className={`mt-1 text-sm ${isDark ? 'muted-dark' : 'muted-light'}`}>
+                  Review homes you saved during browsing.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowSavedPanel(false)}
+                className={`rounded-full p-2 ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}
+                aria-label="Close saved properties"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {savedHomes.length === 0 ? (
+              <p className={`text-sm ${isDark ? 'muted-dark' : 'muted-light'}`}>
+                No saved properties yet.
+              </p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {savedHomes.map((home) => (
+                  <div
+                    key={home.id}
+                    className={`overflow-hidden rounded-[28px] ${isDark ? 'bg-white/5' : 'bg-slate-50'}`}
+                  >
+                    <img
+                      src={home.image}
+                      alt={home.title}
+                      className="h-44 w-full object-cover"
+                    />
+
+                    <div className="p-4">
+                      <h3 className="text-lg font-semibold">{home.title}</h3>
+                      <p className={`mt-1 text-sm ${isDark ? 'muted-dark' : 'muted-light'}`}>
+                        {home.city} • {home.neighborhood}
+                      </p>
+
+                      <p className="mt-3 text-sm">
+                        {home.bedrooms} bd • {home.bathrooms} ba • {home.sqft} sqft
+                      </p>
+
+                      <p className="mt-3 text-lg font-semibold">{formatPrice(home.price)}</p>
+
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleTour(home)}
+                          className={`rounded-2xl px-4 py-3 text-sm font-semibold ${
+                            isDark ? 'primary-btn-dark' : 'primary-btn-light'
+                          }`}
+                        >
+                          Tour
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSavedHome(home)}
+                          className={`rounded-2xl px-4 py-3 text-sm font-semibold ${
+                            isDark ? 'secondary-btn-dark' : 'secondary-btn-light'
+                          }`}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </AnimatedSection>
+      ) : null}
 
       <AnimatedSection delay={0.06}>
         <div className={`mt-6 rounded-[32px] p-6 md:p-8 ${isDark ? 'surface-dark' : 'surface-light'}`}>
@@ -194,15 +356,6 @@ export default function BuyerHomePage() {
               Showing {filteredHomes.length} homes for first-time browsing.
             </p>
           </div>
-
-          <Link
-            to={`/buyer/${buyer.id}/recommendations-preview`}
-            className={`rounded-2xl px-4 py-3 text-sm font-semibold ${
-              isDark ? 'primary-btn-dark' : 'primary-btn-light'
-            }`}
-          >
-            View AI Recommendations
-          </Link>
         </div>
       </AnimatedSection>
 
@@ -274,7 +427,7 @@ export default function BuyerHomePage() {
                   >
                     <span className="flex items-center gap-2">
                       <Heart size={16} />
-                      Save
+                      {isSaved(home.id) ? 'Saved' : 'Save'}
                     </span>
                   </button>
 

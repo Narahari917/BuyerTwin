@@ -44,7 +44,7 @@ export const buyers = [
   {
     id: 'buyer_004',
     name: 'Narahari Kommi',
-    email: 'nkommi@asu.edu',
+    email: 'kommi@asu.edu',
     phone: '555-777-1111',
     budget_min: 320000,
     budget_max: 430000,

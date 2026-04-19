@@ -28,15 +28,17 @@ export default function AgentRegisterPage() {
     setError('')
 
     try {
-      await register({
+      const data = await register({
         name: form.name,
         email: form.email,
         password: form.password,
         role: 'agent',
       })
 
+      console.log('Agent register response:', data)
       navigate('/inbox')
     } catch (err) {
+      console.error('Agent register failed:', err)
       setError(err.message)
     }
   }

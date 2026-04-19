@@ -16,7 +16,14 @@ export async function apiRequest(path, options = {}) {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok) {
-      throw new Error(data.detail || data.message || `HTTP ${response.status}`)
+      console.error('API error response:', data)
+
+      const detail =
+        typeof data.detail === 'string'
+          ? data.detail
+          : JSON.stringify(data.detail || data.message || { status: response.status })
+
+      throw new Error(detail)
     }
 
     return data
@@ -54,5 +61,23 @@ export async function postEvent(payload) {
   return apiRequest('/events', {
     method: 'POST',
     body: JSON.stringify(payload),
+  })
+}
+
+export async function getBuyerRecommendations(buyerId) {
+  return apiRequest(`/recommendations/${buyerId}`, {
+    method: 'GET',
+  })
+}
+
+export async function getAgentDashboard() {
+  return apiRequest('/buyers/inbox', {
+    method: 'GET',
+  })
+}
+
+export async function getBuyerById(buyerId) {
+  return apiRequest(`/buyers/${buyerId}`, {
+    method: 'GET',
   })
 }

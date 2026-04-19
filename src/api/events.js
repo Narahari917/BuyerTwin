@@ -9,7 +9,7 @@ export async function trackEvent({
   metadata = {},
 }) {
   try {
-    await postEvent({
+    return await postEvent({
       user_id: userId,
       role,
       event_type: eventType,
@@ -20,5 +20,6 @@ export async function trackEvent({
     })
   } catch (error) {
     console.error('Event tracking failed:', error.message)
+    throw error
   }
 }
