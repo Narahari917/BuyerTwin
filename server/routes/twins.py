@@ -1,20 +1,18 @@
 from fastapi import APIRouter, HTTPException
-from services.loader_service import load_json
 from services.inference_service import infer_decision_twin
+from services.buyer_service import get_buyer_by_id
+from services.event_service import get_events_by_buyer_id
 
 router = APIRouter()
 
 
 @router.get("/{buyer_id}")
 def get_twin(buyer_id: str):
-    buyers = load_json("buyers.json")
-    buyer = next((buyer for buyer in buyers if buyer["id"] == buyer_id), None)
+    buyer = get_buyer_by_id(buyer_id)
 
     if not buyer:
         raise HTTPException(status_code=404, detail="Buyer not found")
 
-    events = load_json("events.json")
-    buyer_events = [event for event in events if event["buyer_id"] == buyer_id]
-
+    buyer_events = get_events_by_buyer_id(buyer_id)
     twin = infer_decision_twin(buyer, buyer_events)
     return twin

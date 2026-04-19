@@ -2,14 +2,28 @@ def build_angle_phrase(angle: str) -> str:
     angle = angle.lower()
 
     if angle == "schools":
-        return "the strong school fit"
+        return "the school district match"
     if angle == "commute":
-        return "the easy commute"
+        return "the commute convenience"
     if angle == "family space":
-        return "the extra family space"
+        return "the family space"
     if angle == "value":
         return "the overall value"
     return "the overall fit"
+
+
+def build_buyer_friendly_action(next_action: str) -> str:
+    action = next_action.lower()
+
+    if action == "send top 3 listings":
+        return "share a few strong options"
+    if action == "schedule a tour":
+        return "schedule a tour"
+    if action == "wait and nurture":
+        return "keep an eye on similar homes"
+    if action == "follow up on saved homes":
+        return "revisit the homes you liked most"
+    return next_action
 
 
 def generate_outreach(buyer: dict, twin: dict, top_recommendation: dict) -> dict:
@@ -20,15 +34,15 @@ def generate_outreach(buyer: dict, twin: dict, top_recommendation: dict) -> dict
     fit_score = top_recommendation["fit_score"]
     angle_phrase = build_angle_phrase(twin["communication_angle"])
     readiness = twin["tour_readiness"]
-    next_action = twin["next_best_action"]
+    buyer_friendly_action = build_buyer_friendly_action(twin["next_best_action"])
 
     sms_text = (
-        f"Hi {buyer_name}, I found a home I think really stands out for you — {address} in {city}. "
-        f"It looks like a strong match based on {angle_phrase}. "
-        f"Would you like me to send more details or set up a tour?"
+        f"Hi {buyer_name}, I found a home that seems like a great match for you — "
+        f"{address} in {city}. It stands out because of {angle_phrase}. "
+        f"Would you like me to send more details or share a few similar options?"
     )
 
-    email_subject = f"Top home match for you: {address}"
+    email_subject = f"A strong home match for you: {address}"
 
     email_body = (
         f"Hi {buyer_name},\n\n"
@@ -36,19 +50,19 @@ def generate_outreach(buyer: dict, twin: dict, top_recommendation: dict) -> dict
         f"Property: {address}, {city}\n"
         f"Price: ${price:,}\n"
         f"Fit Score: {fit_score}\n\n"
-        f"This recommendation stands out because of {angle_phrase}, and your current activity suggests you are in {readiness}.\n\n"
-        f"My recommendation would be to {next_action}. "
-        f"If you'd like, I can also send you 2 to 3 similar options.\n\n"
+        f"This home stands out because of {angle_phrase}, and your recent activity suggests you are in {readiness}.\n\n"
+        f"A good next step would be to {buyer_friendly_action}. "
+        f"I can also send you a few similar homes if you'd like.\n\n"
         f"Best,\n"
         f"Your Agent"
     )
 
     call_script = (
-        f"Hi {buyer_name}, this is your agent. I wanted to quickly mention a home that seems like a strong fit: "
+        f"Hi {buyer_name}, this is your agent. I wanted to quickly share a home that seems like a strong fit: "
         f"{address} in {city}, listed at ${price:,}. "
         f"What stands out most is {angle_phrase}. "
-        f"Based on your recent activity, I think this could be a good time to {next_action}. "
-        f"Would you like me to send the details or help schedule a tour?"
+        f"Based on your recent activity, a good next step would be to {buyer_friendly_action}. "
+        f"Would you like me to send the details or help set up a tour?"
     )
 
     return {
