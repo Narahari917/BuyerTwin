@@ -6,17 +6,22 @@ from routes.recommendations import router as recommendations_router
 from routes.outreach import router as outreach_router
 from routes.auth import router as auth_router
 from routes.events import router as events_router
-
+import os
 app = FastAPI(
     title="BuyerTwin AI Backend",
     description="Backend API for BuyerTwin AI hackathon MVP",
     version="0.1.0",
 )
 
+frontend_url = os.getenv("FRONTEND_URL")
+
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+
+if frontend_url:
+    origins.append(frontend_url)
 
 app.add_middleware(
     CORSMiddleware,
