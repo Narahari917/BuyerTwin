@@ -31,8 +31,8 @@ export async function apiRequest(path, options = {}) {
   } catch (error) {
     if (error.message === 'Failed to fetch') {
       throw new Error(
-        'Cannot reach backend. Check if FastAPI is running and CORS allows http://localhost:5173'
-      )
+  `Cannot reach backend. API_BASE=${API_BASE}. Check Vercel VITE_API_BASE_URL and Render CORS.`
+)
     }
     throw error
   }
