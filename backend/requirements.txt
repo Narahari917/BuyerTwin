@@ -9,3 +9,5 @@ python-jose
 python-multipart
 bcrypt
 pandas
+numpy
+groq
