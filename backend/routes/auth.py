@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, Header
 from models.auth import RegisterRequest, LoginRequest
 from services.auth_service import (
@@ -8,6 +10,7 @@ from services.auth_service import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/register")
@@ -21,6 +24,9 @@ def register_user(payload: RegisterRequest):
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    except Exception:
+        logger.exception("Unexpected error during registration for email=%s", payload.email)
+        raise HTTPException(status_code=500, detail="Registration failed")
 
     token = create_access_token(user)
 
@@ -33,7 +39,11 @@ def register_user(payload: RegisterRequest):
 
 @router.post("/login")
 def login_user(payload: LoginRequest):
-    user = authenticate_user(payload.email, payload.password)
+    try:
+        user = authenticate_user(payload.email, payload.password)
+    except Exception:
+        logger.exception("Unexpected error during login for email=%s", payload.email)
+        raise HTTPException(status_code=500, detail="Login failed")
 
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")

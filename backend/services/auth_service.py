@@ -1,4 +1,5 @@
 import os
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -11,6 +12,8 @@ from db.connection import get_connection
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-dev-key-change-this")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
@@ -18,11 +21,26 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
+def validate_password_length(password: str) -> None:
+    if not password:
+        raise ValueError("Password is required")
+
+    if len(password.encode("utf-8")) > 72:
+        raise ValueError("Password must be 72 bytes or fewer")
+
+
 def hash_password(password: str) -> str:
+    validate_password_length(password)
     return pwd_context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    if not plain_password:
+        return False
+
+    if len(plain_password.encode("utf-8")) > 72:
+        return False
+
     return pwd_context.verify(plain_password, hashed_password)
 
 
@@ -113,6 +131,15 @@ def attach_buyer_profile_id(user: dict) -> dict:
 
 
 def create_user(name: str, email: str, password: str, role: str) -> dict:
+    logger.info(
+        "Creating user email=%s role=%s password_bytes=%s",
+        email,
+        role,
+        len(password.encode("utf-8")) if password else 0,
+    )
+
+    validate_password_length(password)
+
     existing_user = get_user_by_email(email)
     if existing_user:
         raise ValueError("User with this email already exists")
@@ -195,10 +222,24 @@ def create_user(name: str, email: str, password: str, role: str) -> dict:
                 created_user["buyer_profile_id"] = None
 
             conn.commit()
+
+            logger.info(
+                "Created user successfully email=%s role=%s user_id=%s",
+                email,
+                role,
+                created_user["id"],
+            )
+
             return created_user
 
 
 def authenticate_user(email: str, password: str) -> Optional[dict]:
+    logger.info(
+        "Authenticating user email=%s password_bytes=%s",
+        email,
+        len(password.encode("utf-8")) if password else 0,
+    )
+
     user = get_user_by_email(email)
     if not user:
         return None
@@ -250,5 +291,5 @@ def require_role(user: dict, allowed_roles: list[str]) -> None:
     if user["role"] not in allowed_roles:
         raise HTTPException(
             status_code=403,
-            detail=f"Access denied. Allowed roles: {', '.join(allowed_roles)}"
+            detail=f"Access denied. Allowed roles: {', '.join(allowed_roles)}",
         )
