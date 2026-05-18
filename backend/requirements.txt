@@ -4,10 +4,10 @@ pydantic
 email-validator
 psycopg2-binary
 python-dotenv
-passlib[bcrypt]
+passlib==1.7.4
+bcrypt==4.0.1
 python-jose
 python-multipart
-bcrypt
 pandas
 numpy
 groq
